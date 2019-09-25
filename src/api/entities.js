@@ -36,8 +36,8 @@ export const doLoadAppTypes = () =>
     axiosInstance.get(`${SOURCES_API_BASE}/application_types`);
 
 export function doRemoveSource(sourceId) {
-    return getSourcesApi().deleteSource(sourceId).catch((_error) => {
-        throw { error: 'Source removal failed.' };
+    return getSourcesApi().deleteSource(sourceId).catch((data) => {
+        throw { error: { detail: data.data.errors[0].detail } };
     });
 }
 
@@ -108,18 +108,18 @@ export function doUpdateSource(source, formData) {
 
         return getSourcesApi().updateEndpoint(source.endpoint.id, endpointData)
         .then((_endpointDataOut) => {
-            return getSourcesApi().updateAuthentication(source.authentication.id, formData.authentication)
+            return getSourcesApi().updateAuthentication(source.authentication.id, 'formData.authentication')
             .then((authenticationDataOut) => {
                 return authenticationDataOut;
-            }, (_error) => {
-                throw { error: 'Authentication update failure.' };
+            }, (error) => {
+                throw { error: { title: 'Authentication update failure.', detail: error.data } };
             });
-        }, (_error) => {
-            throw { error: 'Endpoint update failure.' };
+        }, (error) => {
+            throw { error: { title: 'Endpoint update failure.', detail: error.data } };
         });
 
-    }, (_error) => {
-        throw { error: 'Source update failure.' };
+    }, (error) => {
+        throw { error: { title: 'Source update failure.', detail: error.data } };
     });
 }
 
@@ -151,4 +151,7 @@ export const doCreateApplication = (source_id, application_type_id) => getSource
     application_type_id
 });
 
-export const doDeleteApplication = (appId) => getSourcesApi().deleteApplication(appId);
+export const doDeleteApplication = (appId, errorMessage) =>
+    getSourcesApi()
+    .deleteApplication(appId)
+    .catch(({ data: { errors: [{ detail }] } }) => { throw { error: { title: errorMessage, detail } };});

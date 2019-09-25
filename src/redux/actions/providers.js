@@ -1,4 +1,4 @@
-import { ADD_NOTIFICATION } from '@red-hat-insights/insights-frontend-components/components/Notifications';
+import { ADD_NOTIFICATION } from '@redhat-cloud-services/frontend-components-notifications';
 import {
     ACTION_TYPES,
     SORT_ENTITIES,
@@ -6,14 +6,16 @@ import {
     FILTER_PROVIDERS,
     SET_FILTER_COLUMN,
     SOURCE_FOR_EDIT_LOADED,
-    SOURCE_EDIT_REQUEST
+    SOURCE_EDIT_REQUEST,
+    ADD_APP_TO_SOURCE
 } from '../action-types-providers';
 import {
     doLoadAppTypes,
     doLoadSourceForEdit,
     doRemoveSource,
     doUpdateSource,
-    doLoadEntities
+    doLoadEntities,
+    doDeleteApplication
 } from '../../api/entities';
 import { doLoadSourceTypes } from '../../api/source_types';
 
@@ -82,17 +84,20 @@ export const updateSource = (source, formData, title, description) => (dispatch)
         payload: error
     }));
 
-export const removeSource = (sourceId, title) => (dispatch) =>
-    doRemoveSource(sourceId).then(_finished => dispatch({
-        type: ADD_NOTIFICATION,
-        payload: {
-            variant: 'success',
-            title
+export const removeSource = (sourceId, title) => ({
+    type: ACTION_TYPES.REMOVE_SOURCE,
+    payload: () => doRemoveSource(sourceId),
+    meta: {
+        sourceId,
+        notifications: {
+            fulfilled: {
+                variant: 'success',
+                title,
+                dismissable: false
+            }
         }
-    })).catch(error => dispatch({
-        type: 'FOOBAR_REJECTED',
-        payload: error
-    }));
+    }
+});
 
 export const loadSourceForEdit = sourceId => dispatch => {
     dispatch({ type: SOURCE_EDIT_REQUEST });
@@ -112,5 +117,31 @@ export const addMessage = (title, variant, description) => (dispatch) => dispatc
         title,
         variant,
         description
+    }
+});
+
+export const removeApplication = (appId, sourceId, successTitle, errorTitle) => (dispatch) => {
+    dispatch({
+        type: ACTION_TYPES.REMOVE_APPLICATION,
+        payload: () => doDeleteApplication(appId, errorTitle),
+        meta: {
+            appId,
+            sourceId,
+            notifications: {
+                fulfilled: {
+                    variant: 'success',
+                    title: successTitle,
+                    dismissable: false
+                }
+            }
+        }
+    });
+};
+
+export const addAppToSource = (sourceId, app) => ({
+    type: ADD_APP_TO_SOURCE,
+    payload: {
+        sourceId,
+        app
     }
 });
